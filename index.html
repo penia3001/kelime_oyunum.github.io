@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kelime Oyunu</title>
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            background: linear-gradient(to right, #4e54c8, #8f94fb);
+            color: #ffffff;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 5vw;
+            color: #ffffff;
+            margin-bottom: 4vh;
+            text-shadow: 3px 3px 15px rgba(0, 0, 0, 0.7);
+            letter-spacing: 1vw;
+        }
+
+        .container {
+            background: rgba(0, 0, 0, 0.7);
+            padding: 4vh;
+            border-radius: 2vw;
+            box-shadow: 0px 15px 50px rgba(0, 0, 0, 0.6);
+            width: 80vw;
+            max-width: 800px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 80vh;
+            overflow-y: auto;
+            padding-top: 4vh;
+        }
+
+        input[type="text"] {
+            padding: 1.5vh;
+            font-size: 4vw;
+            border: 0.3vw solid #8f94fb;
+            border-radius: 2vw;
+            width: 50%;
+            margin-bottom: 4vh;
+            box-sizing: border-box;
+            outline: none;
+            transition: border-color 0.3s ease;
+            background-color: #383838;
+            color: #ffffff;
+            text-transform: uppercase;
+            box-shadow: 0px 5px 10px rgba(0, 0, 0, 0.5);
+        }
+
+        input[type="text"]:focus {
+            border-color: #8f94fb;
+        }
+
+        button {
+            background-color: #8f94fb;
+            color: white;
+            border: none;
+            padding: 2.5vh 6vw;
+            font-size: 3.5vw;
+            border-radius: 2vw;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            margin-bottom: 4vh;
+            text-transform: uppercase;
+            box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.4);
+        }
+
+        button:hover {
+            background-color: #7b82d1;
+            transform: scale(1.05);
+        }
+
+        .letter-box {
+            width: 8vw;
+            height: 8vw;
+            margin: 2vw;
+            display: inline-block;
+            border: 0.3vw solid #8f94fb;
+            text-align: center;
+            font-size: 4vw;
+            line-height: 8vw;
+            border-radius: 2vw;
+            background-color: #383838;
+            transition: background-color 0.3s ease, transform 0.3s;
+        }
+
+        .letter-box.hidden {
+            background-color: #2c2c2c;
+        }
+
+        #meaning {
+            font-size: 5vw;
+            font-weight: bold;
+            color: #ffffff;
+            text-shadow: 5px 5px 15px rgba(0, 0, 0, 0.7);
+            letter-spacing: 1vw;
+            margin-bottom: 3vh;
+        }
+
+        #skor, #timer {
+            font-size: 3.5vw;
+            color: #8f94fb;
+            margin-top: 3vh;
+        }
+
+        #player-name {
+            font-size: 3.5vw;
+            color: #ffffff;
+            margin-top: 3vh;
+        }
+
+        /* Responsive styles */
+        @media (max-width: 1024px) {
+            h1 {
+                font-size: 6vw;
+            }
+
+            .letter-box {
+                width: 10vw;
+                height: 10vw;
+                font-size: 10vw;
+            }
+
+            input[type="text"], button {
+                font-size: 5vw;
+            }
+
+            #skor, #timer {
+                font-size: 3.5vw;
+            }
+
+            #player-name {
+                font-size: 3.5vw;
+            }
+        }
+
+        @media (max-width: 800px) {
+            h1 {
+                font-size: 9vw;
+            }
+
+            .letter-box {
+                width: 12vw;
+                height: 10vw;
+                font-size: 7vw;
+            }
+
+            input[type="text"], button {
+                font-size: 7vw;
+            }
+
+            #skor, #timer {
+                font-size: 7vw;
+            }
+
+            #player-name {
+                font-size: 4.5vw;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Kelime Oyunu</h1>
+        <div>
+            <input type="text" id="kullanici-adi-input" placeholder="Kullanıcı Adı Girin">
+            <button onclick="addUser()">Kullanıcı Ekle</button>
+        </div>
+        <div id="user-list"></div>
+        <div id="start-game-btn" style="display:none;">
+            <button onclick="startGame()">Oyuna Başla</button>
+        </div>
+        <div id="game-area" style="display:none;">
+            <p><strong> </strong> <span id="meaning"></span></p>
+            <div id="word-container"></div>
+            <div id="input-container">
+                <button onclick="getRandomLetter()">Harf Al</button>
+                <input type="text" id="answer-input" placeholder="Kelimeyi Girin">
+                <button onclick="checkAnswer()">Cevapla</button>
+            </div>
+            <div id="message"></div>
+            <p id="player-name"></p>
+            <p id="skor">Skor: 0</p>
+            <p id="timer">Süre: 210</p>
+        </div>
+        <div id="scoreboard" style="display:none;"></div>
+    </div>
+
+    <script>
+        // Türkçe karakterleri doğru şekilde büyük harfe dönüştüren fonksiyon
+function convertToUpperCase(input) {
+    const turkishLowerCase = 'ığüşöçı';
+    const turkishUpperCase = 'İĞÜŞÖÇI';
+
+    let result = '';
+    
+    // Her karakteri kontrol et ve doğru büyük harfe dönüştür
+    for (let i = 0; i < input.length; i++) {
+        const char = input[i];
+        
+        // Küçük harf Türkçe harfleri büyük harfe dönüştür
+        if (char === 'i') {
+            result += 'İ';  // Türkçe 'i' harfini 'İ' harfine dönüştür
+        } else if (char === 'ı') {
+            result += 'I';  // Türkçe 'ı' harfini 'I' harfine dönüştür
+        } else if (turkishLowerCase.includes(char)) {
+            const index = turkishLowerCase.indexOf(char);
+            result += turkishUpperCase[index];
+        } else {
+            result += char.toUpperCase();  // Diğer harfleri basitçe büyük harfe çevir
+        }
+    }
+
+    return result;
+}
+
+// Yakınlaştırma ve uzaklaştırma işlevleri
+function zoomIn() {
+    document.body.style.transform = 'scale(0.5)';
+    document.body.style.transformOrigin = 'top left';
+}
+
+function zoomOut() {
+    document.body.style.transform = 'scale(0.3)';
+    document.body.style.transformOrigin = 'top left';
+}
+
+// Fare tekerleği ile yakınlaştırma ve uzaklaştırma
+document.body.addEventListener('wheel', function(event) {
+    if (event.deltaY < 0) {
+        zoomIn();
+    } else {
+        zoomOut();
+    }
+});
+
+let users = [];
+let currentPlayerIndex = 0;
+let score = 0;
+let time = 210; // Her oyuncu için 100 saniye süre
+let revealedLetters = 0;
+let wordList = [
+            {word: "İSTİŞARE", clue: "Bir konuda fikir alışverişi yapma ve ortak karar alma süreci."},
+            { word: "TAŞIYICI", clue: "Bir aracı taşıyan veya aktaran kişi." },
+            {word: "ARABA", clue: "İnsanları veya eşyaları taşıyan kara aracı."},
+            {word: "BİLGİ", clue: "Bir konuda sahip olunan gerçekler veya veriler."},
+            {word: "YAZAR", clue: "Kitap, makale veya diğer yazılı eserleri kaleme alan kişi."},
+            {word: "MÜZE", clue: "Sanat, tarih veya bilimle ilgili eserlerin sergilendiği yer."},
+            {word: "SÜT", clue: "Memelilerden elde edilen besin maddesi."},
+            {word: "DENİZ", clue: "Yeryüzünde büyük bir su kütlesi."},
+            {word: "HIPOTHEZ", clue: "Bilimsel araştırmada doğruluğu henüz kanıtlanmamış varsayım."},
+            {word: "JEOLOJİ", clue: "Yerin yapısını, kayaçları ve iç yapısını inceleyen bilim dalı."},
+            {word: "OPTİMİST", clue: "Her şeyin iyi olacağına inanan kişi."},
+            {word: "FİLOZOF", clue: "Felsefe yapan, düşünceyi sorgulayan kişi."},
+            {word: "KARBON", clue: "Kimyada bir element, organik bileşiklerin yapı taşıdır."},
+            {word: "NÜKLEER", clue: "Atom çekirdeği ile ilgili olan veya enerji üreten sistem."},
+            {word: "MÜCADELE", clue: "Bir amaca ulaşmak için gösterilen çaba."},
+            {word: "SABIR", clue: "Zorluklar karşısında bekleyebilme, dayanaklılık gösterme gücü."},
+            {word: "ŞAŞMAK", clue: "Bir şeyin beklenmedik şekilde olması sonucu şaşkınlık duymak."},
+            {word: "ÇEŞİTLİ", clue: "Farklı türde, çeşitlilik gösteren."},
+            {word: "BİLİM", clue: "Doğal ve toplumsal olayları sistematik bir şekilde inceleyen bir alan."},
+            {word: "VAKİT", clue: "Bir olayın gerçekleştiği an veya süre."},
+            {word: "YAZILIM", clue: "Bilgisayarların çalışmasını sağlayan programlar."},
+            {word: "YOLCULUK", clue: "Bir yerden başka bir yere gitmek amacıyla yapılan seyahat."},
+            {word: "KÜTÜPHANE", clue: "Kitaplar ve diğer yazılı materyallerin toplandığı yer."},
+            {word: "KAVİM", clue: "Bir halk veya soy, genellikle tarihsel bir kavram."},
+            {word: "SÜKUT", clue: "Sessizlik, konuşmama durumu."},
+            {word: "İRDELEME", clue: "Derinlemesine inceleme ve araştırma."},
+            {word: "ZİHNİYET", clue: "Bir kişinin düşünme tarzı veya bakış açısı."},
+            {word: "ALEV", clue: "Yanma sonucu ortaya çıkan ışık ve sıcaklık."},
+            {word: "ASTRONOMİ", clue: "Gökyüzü ve evrenin bilimsel olarak incelenmesi."},
+            {word: "ZENGİNLİK", clue: "Maddi veya manevi açıdan çok sayıda değerli varlık."},
+            {word: "KARNAVAL", clue: "Eğlenceli kutlamalarla yapılan büyük şenlik."},
+            {word: "BEYEFENDİ", clue: "Saygıdeğer, nazik ve kibar erkek."},
+            {word: "PARLAKLIK", clue: "Işıltı, göz alıcı parlama."},
+            {word: "FELSEFE", clue: "İnsan düşüncesinin temellerini ve anlamını sorgulayan bilim dalı."},
+            {word: "LABİRENT", clue: "Karmaşık, çıkışı zor bir yol veya yer."},
+            {word: "RÜYA", clue: "Uyurken görülen, bazen gerçeküstü olaylar içeren hayal."},
+            {word: "MELODİ", clue: "Bir müzik parçasındaki uyumlu ve güzel ses sıralaması."},
+            {word: "BİYOSFER", clue: "Yeryüzündeki tüm canlıların yaşadığı alan."},
+            {word: "KLİŞE", clue: "Fazla kullanılan, etkisini yitiren ifade veya davranış."},
+            {word: "ÖZGÜRLÜK", clue: "Kişinin düşünme, hareket etme ve seçim yapma hakkı."},
+            {word: "SİNEMA", clue: "Hareketli görüntülerle hikayelerin anlatıldığı sanat dalı."},
+            {word: "KARMAŞIK", clue: "Birbirine bağlı, çözülmesi zor ve karmaşık yapıda olan şey."},
+            {word: "SARAY", clue: "Zengin ve gösterişli yapılar, genellikle kraliyet veya yüksek sınıf için."},
+            {word: "İLHAM", clue: "Yaratıcılığı tetikleyen içsel kuvvet veya düşünce."},
+            {word: "ŞİİR", clue: "Duygusal ve sanatsal ifade biçimi, genellikle ölçülü ve kafiyeli."},
+            {word: "BÜYÜLEYİCİ", clue: "İnsanları etkileyip hayran bırakan, cazibeli."},
+            { word: "EFSANE", clue: "Kuşaktan kuşağa anlatılan, genellikle olağanüstü olaylar içeren hikaye."},
+            {word: "ZARİF", clue: "Şık ve estetik bir şekilde incelik gösteren."},
+            {word: "İHTİŞAM", clue: "Göz alıcı güzellik ve büyüklük, muazzam görkem."},
+            {word: "MİSTİK", clue: "Doğaüstü güçler ve bilinçaltı ile ilgili şeylere ilgi duyan."},
+            {word: "RİVAYET", clue: "Bir kişinin başka kişilere aktardığı, doğruluğu şüpheli olan haber."},
+            {word: "FERAGAT", clue: "Bir hakkından, malından veya hakkından vazgeçme durumu."},
+            {word: "GAYRET", clue: "Bir işte başarı sağlamak için gösterilen çaba."},
+            {word: "HÜZNÜ", clue: "Üzüntü, derin bir keder hali."},
+            {word: "MÜTEVAZI", clue: "Kendini gösterişsiz şekilde, alçakgönüllü bir şekilde ifade etme."},
+            {word: "BEHLÜL", clue: "Cevabı ''şehvet olan'' olan ''seksüel şevk'' sorusuna verilen yanıt."},
+            {word: "OLTA", clue: "Avını, yaşadığı habitattan çekip çıkaran bir av aracı."},
+            {word: "PARAMEDİK", clue: "''İlk ve acil yardım'' , ''acil tıp teknisyeni'' anlamlarında kullanılan yabancı kökenli bir terim."},
+            {word: "SEHER", clue: "Sabahın güneş doğmadan önceki zamanı."},
+            {word: "DÖNER", clue: "Açısal momentum kebabı."},
+            {word: "NÜDİST", clue: "Çıplaklıktan yana olan."},
+            {word: "KULP TAKMA", clue: "''Bahane veya kusur bulma'' anlamında bir deyim."},
+            {word: "İŞ BÖLÜMÜ", clue: "Takım çalışmalarında ekip elemanlarının sorumluluk ve yükümlülükleri paylaşması."},
+            {word: "ATIK", clue: "Hastane, ev, fabrika gibi yerlerden kullanılmış ve kullanıcının artık işine yaramayan maddelerin tümü."},
+            {word: "ESTETİK", clue: "Güzel ve sanatsal olanı anlamaya yönelik düşünce veya felsefe."},
+            {word: "PRESTİJ", clue: "Bir kişinin veya kurumun saygınlık, değer veya ün kazanması durumu."},
+            {word: "YERKÜRE", clue: "Dünya yüzeyi, insanın yaşadığı gezegen."},
+            {word: "SENTEZ", clue: "Farklı fikirlerin veya bileşenlerin birleştirilmesi."},
+            {word: "SEFİLLİK", clue: "Aşağılık, kötü durumda olma hali."},
+            {word: "KONSEPT", clue: "Bir şeyin zihinsel olarak oluşturulan ve tanımlanan kavramı."},
+            {word: "SİNERJİ", clue: "Birleşik çabaların beklenenden daha büyük bir sonuç yaratması durumu."},
+            {word: "ANTİK", clue: "Eski, genellikle tarihi ve değerli."},
+            {word: "LÜKS", clue: "Aşırı konforlu ve pahalı bir yaşam tarzı."},
+            {word: "REJİ", clue: "Bir film veya tiyatro gösterisinin yönetimi ve düzenlemesi."},
+            {word: "ZARİF", clue: "Şık, incelikli ve estetik açıdan hoş olan."},
+            {word: "SİNEMA", clue: "Hareketli görüntülerle hikayelerin anlatıldığı sanat dalı."},
+            {word: "VİP", clue: "Özel ve önemli kişilere yönelik hizmet veya statü."},
+            {word: "FİLOZOF", clue: "Felsefe yapan, düşünceyi sorgulayan kişi."},
+            {word: "MELANKOLİ", clue: "Derin bir hüzün ve nostalji duygusu."},
+            {word: "LİDER", clue: "Bir grup veya topluluk üzerinde etki yaratan ve yönlendiren kişi."},
+            {word: "YUMURTA", clue: "Genellikle ''viyol'' denen özel karton kaplarda satılan, kendinden ambalajlı bir besin."},
+            {word: "AMBİYANS", clue: "''Durum, ortam, çevre, atmosfer'' anlamlarında kullanılan bir sözcük."},
+            {word: "HATUN", clue: "Eskiden yüksek makamdaki kadınlara ve hakan eşlerine verilen unvan."},
+            {word: "PANİK", clue: "Birden ortaya çıkan, aşırı ve normalin dışına taşmış korku hali."},
+            {word: "RÜZGAR", clue: "Havanın hareketi, esen hava."},
+            {word: "DOĞA", clue: "Bütün canlıların ve cansız varlıkların oluşturduğu çevre."},
+            {word: "KALP", clue: "Canlıların vücutta kan pompalayan organı, duyguların merkezi."},
+            {word: "MÜCADELE", clue: "Bir amaca ulaşmak için gösterilen çaba."},
+            
+            {word: "SANTRA", clue: "Futbolda hem orta yuvarlak hem başlama vuruşu anlamlarına gelen söz."},
+            {word: "MİSYON", clue: "Bir kurumun, grubun veya kişinin belirlediği amaç veya görev."},
+            {word: "KARDEŞ", clue: "Aynı anne babadan olan kişi."},
+            {word: "OKUL", clue: "Öğrenim görmek için gidilen yer."}
+            // Buraya daha fazla kelime ve anlam eklenebilir
+];
+let word, clue;
+let timeInterval;
+
+function addUser() {
+    const userName = document.getElementById("kullanici-adi-input").value.trim();
+    if (userName) {
+        if (users.some(user => user.name === userName)) {
+            alert("Bu kullanıcı adı zaten mevcut!");
+        } else {
+            users.push({ name: userName, score: 0 });
+            document.getElementById("user-list").innerText += `\n${userName}`;
+            document.getElementById("kullanici-adi-input").value = "";
+            if (users.length > 1) {
+                document.getElementById("start-game-btn").style.display = 'inline';
+            }
+        }
+    }
+}
+
+function startGame() {
+    document.getElementById("start-game-btn").style.display = 'none';
+    document.getElementById("game-area").style.display = 'block';
+    playTurn();
+}
+
+function showScoreboard() {
+    document.getElementById("game-area").style.display = 'none';
+    document.getElementById("scoreboard").style.display = 'block';
+    let scoreboardContent = "Skor Tablosu:<br>";
+    users.forEach(user => {
+        scoreboardContent += `${user.name}: ${user.score} puan<br>`;
+    });
+    let winner = users.reduce((prev, current) => (prev.score > current.score) ? prev : current);
+    scoreboardContent += `<br>Kazanan: ${winner.name}`;
+    document.getElementById("scoreboard").innerHTML = scoreboardContent;
+}
+
+function playTurn() {
+    if (currentPlayerIndex >= users.length) {
+        showScoreboard();
+        return;
+    }
+    const currentUser = users[currentPlayerIndex];
+    document.getElementById("player-name").innerText = `ŞUANDA OYNAYAN OYUNCU: ${currentUser.name}`;
+    score = 0;
+    time = 210;
+    document.getElementById("skor").innerText = `Skor: ${score}`;
+    document.getElementById("timer").innerText = `Süre: ${time}`;
+    setRandomWord();
+
+    timeInterval = setInterval(() => {
+        time--;
+        document.getElementById("timer").innerText = `Süre: ${time}`;
+        if (time === 0) {
+            clearInterval(timeInterval);
+            nextPlayer();
+        }
+    }, 1000);
+}
+
+function setRandomWord() {
+    const randomWord = wordList[Math.floor(Math.random() * wordList.length)];
+    word = randomWord.word;
+    clue = randomWord.clue;
+    document.getElementById("meaning").innerText = clue;
+    revealedLetters = 0;
+    displayWord();
+}
+
+function nextPlayer() {
+    currentPlayerIndex++;
+    if (currentPlayerIndex < users.length) {
+        playTurn();
+    } else {
+        showScoreboard();
+    }
+}
+
+function getRandomLetter() {
+    if (revealedLetters < word.length) {
+        let randomIndex = Math.floor(Math.random() * word.length);
+        while (document.getElementById('letter-box-' + randomIndex).textContent !== '') {
+            randomIndex = Math.floor(Math.random() * word.length); // Tekrar rastgele seç
+        }
+
+        const box = document.getElementById('letter-box-' + randomIndex);
+        box.textContent = word[randomIndex];
+        box.classList.remove('hidden');
+        revealedLetters++;
+        score -= 2;
+        if (score < 0) score = 0; // Skor sıfırın altına düşmesin
+        document.getElementById("skor").innerText = `Skor: ${score}`;
+    }
+}
+
+function checkAnswer() {
+    // Kullanıcı cevabını alırken, input'u büyük harfe dönüştürüyoruz
+    const input = document.getElementById('answer-input').value; 
+    const upperCaseInput = convertToUpperCase(input); // Türkçe büyük harfe dönüştür
+
+    if (upperCaseInput === word) {
+        score += 10;
+        document.getElementById("message").textContent = "Tebrikler! Kelimeyi doğru bildiniz!";
+        fillAllLetters();
+        users[currentPlayerIndex].score = score; // Skor güncelleniyor
+        setTimeout(() => {
+            document.getElementById("message").textContent = "";
+            setRandomWord();
+        }, 1000);
+    } else {
+        document.getElementById("message").textContent = "Yanlış kelime, tekrar deneyin.";
+        time--; // Yanlış cevap verildiğinde süre azalmalı
+        document.getElementById("timer").innerText = `Süre: ${time}`;
+    }
+    document.getElementById('answer-input').value = ''; // Inputu temizle
+}
+
+function fillAllLetters() {
+    for (let i = 0; i < word.length; i++) {
+        const box = document.getElementById('letter-box-' + i);
+        box.textContent = word[i];
+        box.classList.remove('hidden');
+    }
+}
+
+// Input alanındaki her harfi büyük yap
+document.getElementById('answer-input').addEventListener('input', function(e) {
+    // Kullanıcının yazdığı metni büyük harfe dönüştür
+    e.target.value = convertToUpperCase(e.target.value);
+});
+
+function displayWord() {
+    const container = document.getElementById('word-container');
+    container.innerHTML = '';
+    for (let i = 0; i < word.length; i++) {
+        const box = document.createElement('div');
+        box.classList.add('letter-box', 'hidden');
+        box.setAttribute('id', 'letter-box-' + i);
+        container.appendChild(box);
+    }
+}
+</script>
+</body>
+</html>
